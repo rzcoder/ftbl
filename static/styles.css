@@ -1,0 +1,47 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    font-family: 'Open Sans', sans-serif;
+    background: #fff;
+}
+
+.container {
+    position: relative;
+    top: calc(45% - 1.5em - 265px);
+    width: 520px;
+    height: calc(3em + 550px);
+    border: 0px solid #000;
+    margin: auto;
+}
+
+.scores {
+    text-align: center;
+    font-size: 3em;
+    font-family: 'Audiowide', cursive;
+}
+
+.style-team1 {
+    color: #F00;
+}
+
+.style-team2 {
+    color: #00F;
+}
+
+.score-delimiter {
+    color: #000;
+}
+
+.teamCaption {
+    font-family: 'Audiowide', cursive;
+    text-align: center;
+    font-size: 1.5em;
+}
+
+#canvas {
+    width: 520px;
+    height: 520px;
+    margin: 10px auto;
+    border: 0px solid #0F0;
+}

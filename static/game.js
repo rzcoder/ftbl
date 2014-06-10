@@ -1,5 +1,5 @@
 (function () {
-    var canvas, ctx, gameState, teamsEl, fieldState;
+    var canvas, ctx, gameState, teamsEl;
 
     var canvasParams = {
         width: 520,
@@ -68,10 +68,10 @@
         gameState = {
             team1Score: 0,
             team2Score: 0,
-            moveLog: []
+            moveLog: [],
+            field: field.slice(0)
         };
 
-        fieldState = field.slice(0);
 
         loadResources(function() {
             drawField();
@@ -84,7 +84,7 @@
         grassImg = new Image();
         grassImg.src = '/assets/grass.jpg';
         grassImg.onload = function() {
-            callback();
+            //callback();
         }
     }
 

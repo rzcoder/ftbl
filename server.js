@@ -10,10 +10,6 @@ var config = {
 
 app.use(express.static(config.staticFolder));
 
-app.get('/hello.txt', function(req, res){
-    res.send('Hello World');
-});
-
 server.listen(config.port, function() {
     console.log('Listening on port ' + config.port);
 });

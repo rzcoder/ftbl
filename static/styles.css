@@ -3,7 +3,7 @@ body, html {
     padding: 0;
     height: 100vh;
     font-family: 'Open Sans', sans-serif;
-    background: #fff;
+    background: #242E3B;
 }
 
 .container {
@@ -11,10 +11,10 @@ body, html {
     width: 820px;
     -webkit-transform: translate(50%, 50%);
     -moz-transform: translate(50%, 50%);
+    -ms-transform: translate(50%, 50%);
     transform: translate(50%, 50%);
     top: -50%;
     left: -50%;
-
 }
 
 .scores {
@@ -24,11 +24,11 @@ body, html {
 }
 
 .style-team1 {
-    color: #F00;
+    color: rgb(240, 0, 0);
 }
 
 .style-team2 {
-    color: #00F;
+    color: rgb(11, 76, 185);
 }
 
 .score-delimiter {
@@ -39,17 +39,17 @@ body, html {
     float: right;
     width: 300px;
     height: 100%;
-    background-color: #ccc5bf;
-}
-
-.team-caption {
-    font-family: 'Audiowide', 'Helvetica Neue', cursive;
-    font-size: 1.5em;
+    -webkit-transform: perspective(900px) rotateY(-15deg) scale(1.047) translateX(-6px);
+    -moz-transform: perspective(900px) rotateY(-15deg) scale(1.047) translateX(-6px);
+    -ms-transform: perspective(900px) rotateY(-15deg) scale(1.047) translateX(-6px);
+    transform: perspective(900px) rotateY(-15deg) scale(1.047) translateX(-6px);
+    background-color: #ededed;
+    box-shadow: 5px 2px 5px -1px rgba(0, 0, 0, 0.3);
 }
 
 #canvas {
     width: 520px;
     height: 520px;
     margin: 0;
-    background-color: #b1bbcc;
+    box-shadow: 5px 2px 5px 0 rgba(0,0,0,0.3);
 }

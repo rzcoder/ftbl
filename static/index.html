@@ -8,17 +8,27 @@
 </head>
 <body>
 
-    <div class="container">
+    <div class="container hidden">
         <canvas id="canvas" width="520" height="520"></canvas><!--
      --><div class="status-panel"><div class="scores">
                 <span class="style-team1 scores-team1">05</span>
                 <span class="score-delimiter">:</span>
                 <span class="style-team2 scores-team2">03</span>
             </div>
+
+            <div class="shareButtons">
+                <span class='st_googleplus_large' displayText='Google +'></span>
+                <span class='st_facebook_large' displayText='Facebook'></span>
+                <span class='st_twitter_large' displayText='Tweet'></span>
+                <span class='st_vkontakte_large' displayText='Vkontakte'></span>
+            </div>
         </div>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="/game.js"></script>
+    <script type="text/javascript">var switchTo5x=true;</script>
+    <script type="text/javascript" src="http://w.sharethis.com/button/buttons.js"></script>
+    <script type="text/javascript">stLight.options({publisher: "f62e5d93-dd84-41c9-9791-06e459758f55", doNotHash: false, doNotCopy: false, hashAddressBar: false});</script>
 </body>
 </html>

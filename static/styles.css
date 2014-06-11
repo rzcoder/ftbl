@@ -1,20 +1,26 @@
 body, html {
     margin: 0;
     padding: 0;
-    height: 100vh;
+    height: 100%;
     font-family: 'Open Sans', sans-serif;
     background: #242E3B;
 }
 
+.hidden {
+    display: none;
+}
+
 .container {
+    position: absolute;
     height: 520px;
     width: 820px;
-    -webkit-transform: translate(50%, 50%);
-    -moz-transform: translate(50%, 50%);
-    -ms-transform: translate(50%, 50%);
-    transform: translate(50%, 50%);
-    top: -50%;
-    left: -50%;
+    -webkit-transform: translate(-50%, -50%);
+    -moz-transform: translate(-50%, -50%);
+    -ms-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+    top: 50%;
+    left: 50%;
+    translate: all 1s;
 }
 
 .scores {
@@ -36,6 +42,7 @@ body, html {
 }
 
 .status-panel {
+    position: relative;
     float: right;
     width: 300px;
     height: 100%;
@@ -45,6 +52,20 @@ body, html {
     transform: perspective(900px) rotateY(-15deg) scale(1.047) translateX(-6px);
     background-color: #ededed;
     box-shadow: 5px 2px 5px -1px rgba(0, 0, 0, 0.3);
+}
+
+.shareButtons {
+    position: absolute;
+    bottom: -50px;
+    right: -4px;
+    text-align: right;
+    opacity: 0.2;
+    transition: all .5s;
+    cursor: default;
+}
+
+.shareButtons:hover {
+    opacity: 1;
 }
 
 #canvas {

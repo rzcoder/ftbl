@@ -4,7 +4,7 @@
   "description": "ftbl",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "install": "browserify src/client/client.js -o static/script.js"
   },
   "repository": {
     "type": "git",

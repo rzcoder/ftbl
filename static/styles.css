@@ -1,8 +1,9 @@
+* {font-family: 'Open Sans', sans-serif;}
+
 body, html {
     margin: 0;
     padding: 0;
     height: 100%;
-    font-family: 'Open Sans', sans-serif;
     background: #242E3B;
 }
 
@@ -12,21 +13,73 @@ body, html {
 
 .container {
     position: absolute;
-    height: 520px;
-    width: 820px;
     -webkit-transform: translate(-50%, -50%);
     -moz-transform: translate(-50%, -50%);
     -ms-transform: translate(-50%, -50%);
     transform: translate(-50%, -50%);
     top: 50%;
     left: 50%;
-    translate: all 1s;
+}
+
+.startview {
+    background: #fff;
+    height: 520px;
+    width: 820px;
+    border-radius: 0px;
+    box-shadow: 2px 2px 3px 0px rgba(0, 0, 0, 0.4);
+}
+
+.startview h1 {
+    text-align: center;
+    margin-top: 30px;
+    color: #B00;
+    font-size: 5.5em;
+    font-family: 'Audiowide', 'Helvetica Neue', arial;
+}
+
+.startview .buttons {
+    width: 290px;
+    position: absolute;
+    -webkit-transform: translate(-50%, -50%);
+    -moz-transform: translate(-50%, -50%);
+    -ms-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+    top: 50%;
+    left: 50%;
+}
+
+.startview .buttons button {
+    width: 290px;
+}
+
+.startview .info {
+    text-align: center;
+    font-size: 1.5em;
+}
+
+.startview .info > span,
+.startview .info > a {
+    display: block;
+}
+
+.startview .info .infoLink {
+    cursor: text;
+    color: #14A1E4;
+    text-decoration: underline;
+    margin-top: 10px;
+}
+
+.gameview {
+    height: 520px;
+    width: 820px;
 }
 
 .scores {
     text-align: center;
     font-size: 3em;
-    font-family: 'Audiowide', 'Helvetica Neue', cursive;
+}
+.scores span {
+    font-family: 'Audiowide', 'Helvetica Neue', arial;
 }
 
 .style-team1 {
@@ -73,4 +126,31 @@ body, html {
     height: 520px;
     margin: 0;
     box-shadow: 5px 2px 5px 0 rgba(0,0,0,0.3);
+}
+
+button {
+    border: 1px solid #222;
+    color: #222;
+    font-size: 1.15em;
+    background: #FFF;
+    border-radius: 5px;
+    transition: all .2s;
+    padding: 15px 25px;
+    outline: 0;
+    cursor: default;
+    margin-bottom: 20px;
+}
+
+button:hover, button:active, button:focus {
+    outline: 0;
+}
+
+button:hover {
+    border: 1px solid #50aab1;
+    color: #50aab1;
+}
+
+button:active {
+    background: #50aab1;
+    color: #fff;
 }

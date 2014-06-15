@@ -7,13 +7,24 @@
     <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
+    <div class="container startview">
+        <h1>Ftbl</h1>
+        <div class="buttons">
+            <button data-role="open">Join open game</button>
+            <button data-role="new">Create private game</button>
+        </div>
+        <div class="info hidden">
+            <span class="infoText"></span>
+            <a class="infoLink"></a>
+        </div>
+    </div>
 
-    <div class="container hidden">
+    <div class="container gameview hidden">
         <canvas id="canvas" width="520" height="520"></canvas><!--
      --><div class="status-panel"><div class="scores">
-                <span class="style-team1 scores-team1">05</span>
+                <span class="style-team1 scores-team1">99</span>
                 <span class="score-delimiter">:</span>
-                <span class="style-team2 scores-team2">03</span>
+                <span class="style-team2 scores-team2">99</span>
             </div>
 
             <div class="shareButtons">
@@ -26,9 +37,9 @@
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
-    <script src="/game.js"></script>
-    <script type="text/javascript">var switchTo5x=true;</script>
+    <script src="/script.js"></script>
+    <!--<script type="text/javascript">var switchTo5x=true;</script>
     <script type="text/javascript" src="http://w.sharethis.com/button/buttons.js"></script>
-    <script type="text/javascript">stLight.options({publisher: "f62e5d93-dd84-41c9-9791-06e459758f55", doNotHash: false, doNotCopy: false, hashAddressBar: false});</script>
+    <script type="text/javascript">stLight.options({publisher: "f62e5d93-dd84-41c9-9791-06e459758f55", doNotHash: false, doNotCopy: false, hashAddressBar: false});</script>-->
 </body>
 </html>

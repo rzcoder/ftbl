@@ -11,7 +11,7 @@ module.exports = (function() {
     ServerGame.prototype.addPlayer = function (socket) {
         this.teams.push(socket);
 
-        if (this.isComplete() && ~~(Math.random() * 2 % 2 == 1)) {
+        if (this.isComplete() && ~~(Math.random() * 1000 % 2) == 1) {
             this.teams.push(this.teams.shift());
         }
 

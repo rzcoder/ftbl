@@ -56,10 +56,13 @@ var Network = require('./network');
         this.game = new Game();
         this.game.init(gameData.fieldSize, gameData.state);
 
-        this.gameView = this.gameView || new GameView(this, null, null, function(){
-            _this.gameView.render();
-            _this.gameView.show();
-        });
+        if (! this.gameView) {
+            this.gameView = new GameView(this, null);
+            this.gameView.setListener('ready', function() {
+                _this.gameView.render();
+                _this.gameView.show();
+            });
+        }
 
         var _this = this;
 

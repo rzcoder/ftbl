@@ -1,14 +1,16 @@
 var Render = require('./render');
+var EventEmitter = require('../eventEmitter');
 
 module.exports = (function () {
     var CANVAS_SIZE = 520;
     var CANVAS_PADDING = 10;
 
-    function View(client, callbacks, canvasSize, onReady) {
+    View.prototype = new EventEmitter();
+
+    function View(client, canvasSize) {
         var _this = this;
         this.client = client;
         this.game = client.game;
-        this.callbacks = callbacks || {};
 
         this.canvasSize = canvasSize || CANVAS_SIZE;
         this.canvasParams = {
@@ -19,22 +21,45 @@ module.exports = (function () {
             stepSize: ~~((this.canvasSize - CANVAS_PADDING * 2)  / (this.game.map.fieldSize - 1))
         };
 
-        this.renderer = new Render(this, this.game, onReady);
-        this.game.setListener('move', function() {
-            _this.renderer.drawMoves();
-            _this.renderer.render();
-        });
+        this.renderer = new Render(this, this.game);
 
         this.container = document.querySelector('.gameview');
         this.teamsScores = [
-            document.querySelector('.gameview .scores-team1'),
-            document.querySelector('.gameview .scores-team2')
+            document.querySelector('.gameview .scores-team-0'),
+            document.querySelector('.gameview .scores-team-1')
         ];
+        this.movesLog = document.querySelector('.gameview .moves-log');
 
         this.setEvents();
 
-        this.game.setListener('goal', function(){ _this.updateScores(); });
+        this.renderer.setListener('ready', function () {
+            _this.fireEvent('ready');
+        });
+
+        this.game.setListener('move', function (move, newTeam) {
+            _this.renderer.drawMoves();
+            _this.renderer.render();
+            _this.log('move', move, newTeam);
+        });
+
+        this.game.setListener('goal', function (team) {
+            _this.updateScores();
+            _this.renderer.render();
+            _this.log('goal', team);
+        });
+
+        this.game.setListener('deadend', function (team) {
+            _this.updateScores();
+            _this.renderer.render();
+            _this.log('deadend', team);
+        });
+
+        this.game.setListener('gameover', function () {
+            _this.log('gameover');
+        });
     }
+
+    View.prototype = new EventEmitter();
 
     View.prototype.render = function() {
         this.renderer.render();
@@ -96,8 +121,56 @@ module.exports = (function () {
     };
 
     View.prototype.updateScores = function () {
-        this.teamsScores[0].innerText = this.game.state.scores[0];
-        this.teamsScores[1].innerText = this.game.state.scores[1];
+        this.teamsScores[0].innerText = '0' + this.game.state.scores[0];
+        this.teamsScores[1].innerText = '0' + this.game.state.scores[1];
+    };
+
+    View.prototype.log = function (type) {
+        var _this = this;
+
+        function addRecord (type, html) {
+            _this.movesLog.innerHTML = '<span class="log-message log-' + type + '">' + html + '</span>' + (_this.movesLog.innerHTML || '');
+        }
+
+        function team (team) {
+            return '<span class="team-inline-' + team + ' style-team-' + team + '"> Team ' + (team + 1) + '</span>';
+        }
+
+        function scores () {
+            return '<span class="style-team-0 score-inline">0' + _this.game.state.scores[0] + '</span>' +
+            '<span class="score-inline-delimiter">:</span>' +
+            '<span class="style-team-1 score-inline">0' + _this.game.state.scores[1] + '</span>';
+        }
+
+        switch (type) {
+            case 'move':
+                addRecord('move', team(arguments[1].team) +
+                    ' moves to ' + arguments[1].mx + ':' + arguments[1].my +
+                    (arguments[1].team == arguments[2] ? ' and continue!' : '. Turn passes to ' + team(arguments[2]))
+                );
+                break;
+
+            case 'goal':
+                addRecord('goal', 'GOAL! ' + team(arguments[1]) + ' scores! ' + scores());
+                addRecord('move', team(arguments[1] ^ 1) + ' moves.');
+                break;
+
+            case 'deadend':
+                addRecord('deadend', team(arguments[1]) + ' in the dead end! ' + scores());
+                addRecord('move', team(arguments[1]) + ' moves again.');
+                break;
+                break;
+
+            case 'gameover':
+                if(this.game.state.scores[0] == this.game.state.scores[1]) {
+                    var winTeam = '<span></span>'
+                } else {
+                    var winTeam = (this.game.state.scores[0] > this.game.state.scores[1] ? team(0) : team(1)) + ' win!';
+                }
+                addRecord('gameover', 'Game over! <br/>' + scores() + '<br/>' + winTeam);
+                break;
+        }
+
     };
 
     View.prototype.eventMouseMove = function (e) {
@@ -105,7 +178,7 @@ module.exports = (function () {
         if (this.game.state.currentPlayer == this.client.player.team) {
             this.renderer.preview(pos);
         }
-        if(this.callbacks.mouseMove) this.callbacks.mouseMove(pos);
+        this.fireEvent('mousemove', [pos]);
     };
 
     View.prototype.eventClick = function (e) {
@@ -121,7 +194,7 @@ module.exports = (function () {
             });
         }
 
-        if (this.callbacks.click) this.callbacks.click(pos);
+        this.fireEvent('click', [pos]);
     };
 
     return View;

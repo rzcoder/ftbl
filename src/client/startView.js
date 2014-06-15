@@ -1,4 +1,5 @@
 module.exports = (function () {
+
     function View(client) {
         this.client = client;
         this.network = client.network;

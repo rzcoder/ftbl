@@ -1,10 +1,13 @@
 var Map = require('./map');
+var EventEmitter = require('./eventEmitter');
 
 module.exports = (function() {
 
     function Game() {
 
     }
+
+    Game.prototype = new EventEmitter();
 
     Game.prototype.init = function(mapData, state, callbacks) {
         this.map = new Map();
@@ -27,10 +30,6 @@ module.exports = (function() {
             }
 
         };
-    };
-
-    Game.prototype.setListener = function(event, fn) {
-        this.callbacks[event] = fn;
     };
 
     Game.prototype.toStartPosition = function() {
@@ -112,16 +111,18 @@ module.exports = (function() {
 
             this.state.field[move.my][move.mx] = 3;
 
+
+            this.state.currentPosition.x = move.mx;
+            this.state.currentPosition.y = move.my;
+            this.fireEvent('move', [move, this.state.currentPlayer]);
+
             if (move.my == 0 && move.mx >= 3 && move.mx <= 7) {
                 this.goal(1);
             } else if (move.my == this.map.fieldSize - 1 && move.mx >= 3 && move.mx <= 7) {
                 this.goal(0);
-            } else {
-                this.state.currentPosition.x = move.mx;
-                this.state.currentPosition.y = move.my;
+            } else if (this.getPossibleMoves(move.mx, move.my).length == 0) {
+                this.goal(move.team ^ 1, true);
             }
-
-            if (this.callbacks.move) this.callbacks.move();
 
             return true;
         } else {
@@ -129,15 +130,21 @@ module.exports = (function() {
         }
     };
 
-    Game.prototype.goal = function(team) {
-        this.state[team]++;
-        if(this.callbacks.goal) this.callbacks.goal();
-        this.toStartPosition();
+    Game.prototype.goal = function(team, deadend) {
+        this.state.scores[team]++;
         this.state.currentPlayer = team ^ 1;
+
+        if(deadend) {
+            this.fireEvent('deadend', [team ^ 1]);
+        } else {
+            this.fireEvent('goal', [team]);
+        }
+
+        this.toStartPosition();
 
         if (this.getPossibleMoves().length == 0) {
             console.log('game over');
-            if(this.callbacks.gameOver) this.callbacks.gameOver();
+            this.fireEvent('gameover');
         }
     };
 

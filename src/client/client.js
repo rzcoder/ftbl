@@ -36,6 +36,10 @@ var Network = require('./network');
             this.player.team = data.team;
         });
 
+        this.network.setListener('enemyGone', function(data) {
+            this.game.gameover('playerdc');
+        });
+
         this.network.setListener('move', function(data) {
             this.game.move(data);
         });
@@ -62,6 +66,8 @@ var Network = require('./network');
                 _this.gameView.render();
                 _this.gameView.show();
             });
+        } else {
+            this.gameView.init();
         }
 
         var _this = this;

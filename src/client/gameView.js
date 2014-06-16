@@ -29,6 +29,7 @@ module.exports = (function () {
             document.querySelector('.gameview .scores-team-1')
         ];
         this.movesLog = document.querySelector('.gameview .moves-log');
+        this.controls = document.querySelector('.gameview .control-buttons');
 
         this.setEvents();
 
@@ -55,11 +56,19 @@ module.exports = (function () {
         });
 
         this.game.setListener('gameover', function () {
+            _this.show(_this.controls);
             _this.log('gameover');
         });
     }
 
     View.prototype = new EventEmitter();
+
+    View.prototype.init = function (){
+        this.hide(this.controls);
+        this.movesLog.innerHTML = '';
+        this.updateScores();
+    };
+
 
     View.prototype.render = function() {
         this.renderer.render();
@@ -167,7 +176,8 @@ module.exports = (function () {
                 } else {
                     var winTeam = (this.game.state.scores[0] > this.game.state.scores[1] ? team(0) : team(1)) + ' win!';
                 }
-                addRecord('gameover', 'Game over! <br/>' + scores() + '<br/>' + winTeam);
+                addRecord('gameover', 'Game over! ' + scores() + '<br/>');
+                addRecord('gameover', winTeam);
                 break;
         }
 

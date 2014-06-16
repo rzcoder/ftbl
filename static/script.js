@@ -37,6 +37,10 @@ var Network = require('./network');
             this.player.team = data.team;
         });
 
+        this.network.setListener('enemyGone', function(data) {
+            this.game.gameover('playerdc');
+        });
+
         this.network.setListener('move', function(data) {
             this.game.move(data);
         });
@@ -63,6 +67,8 @@ var Network = require('./network');
                 _this.gameView.render();
                 _this.gameView.show();
             });
+        } else {
+            this.gameView.init();
         }
 
         var _this = this;
@@ -106,6 +112,7 @@ module.exports = (function () {
             document.querySelector('.gameview .scores-team-1')
         ];
         this.movesLog = document.querySelector('.gameview .moves-log');
+        this.controls = document.querySelector('.gameview .control-buttons');
 
         this.setEvents();
 
@@ -132,11 +139,19 @@ module.exports = (function () {
         });
 
         this.game.setListener('gameover', function () {
+            _this.show(_this.controls);
             _this.log('gameover');
         });
     }
 
     View.prototype = new EventEmitter();
+
+    View.prototype.init = function (){
+        this.hide(this.controls);
+        this.movesLog.innerHTML = '';
+        this.updateScores();
+    };
+
 
     View.prototype.render = function() {
         this.renderer.render();
@@ -244,7 +259,8 @@ module.exports = (function () {
                 } else {
                     var winTeam = (this.game.state.scores[0] > this.game.state.scores[1] ? team(0) : team(1)) + ' win!';
                 }
-                addRecord('gameover', 'Game over! <br/>' + scores() + '<br/>' + winTeam);
+                addRecord('gameover', 'Game over! ' + scores() + '<br/>');
+                addRecord('gameover', winTeam);
                 break;
         }
 
@@ -734,6 +750,7 @@ module.exports = (function () {
 },{}],10:[function(require,module,exports){
 var Map = require('./map');
 var EventEmitter = require('./eventEmitter');
+var utils = require('./utils');
 
 module.exports = (function() {
 
@@ -757,7 +774,7 @@ module.exports = (function() {
             scores: [0,0],
             currentPlayer: 0,
             moveLog: [],
-            field: this.map.field.slice(0),
+            field: utils.clone2DArray(this.map.field),
             currentPosition: {
                 x: ~~(this.map.fieldSize / 2),
                 y: ~~(this.map.fieldSize / 2)
@@ -817,7 +834,8 @@ module.exports = (function() {
         if ((x == mx && y == my) || // not same point
             mx < 0 || my < 0 || mx >= this.map.fieldSize || mx >= this.map.fieldSize || // not map overflow
             this.map.field[my][mx] == 0 || // not field overflow
-            (this.map.field[y][x] == 1 && this.map.field[my][mx] == 1 && (y == my || x == mx))) // not from border to border
+            (this.map.field[y][x] == 1 && this.map.field[my][mx] == 1 && (y == my || x == mx)) || // not from border to border
+            this.map.field[my][x] == 0) // not protruding corner
         {
             return false;
         }
@@ -868,23 +886,26 @@ module.exports = (function() {
         this.state.scores[team]++;
         this.state.currentPlayer = team ^ 1;
 
-        if(deadend) {
+        this.toStartPosition();
+
+        if (deadend) {
             this.fireEvent('deadend', [team ^ 1]);
         } else {
             this.fireEvent('goal', [team]);
         }
 
-        this.toStartPosition();
-
         if (this.getPossibleMoves().length == 0) {
-            console.log('game over');
-            this.fireEvent('gameover');
+            this.gameover('nomoves');
         }
+    };
+
+    Game.prototype.gameover = function(reason) {
+        this.fireEvent('gameover', [reason]);
     };
 
     return Game;
 })();
-},{"./eventEmitter":9,"./map":11}],11:[function(require,module,exports){
+},{"./eventEmitter":9,"./map":11,"./utils":12}],11:[function(require,module,exports){
 module.exports = (function() {
     var MAP_DEFAULT_SIZE = 11;
     var GATE_DEFAULT_SIZE = 4;
@@ -975,4 +996,24 @@ module.exports = (function() {
 
     return Map;
 })();
+},{}],12:[function(require,module,exports){
+module.exports.makeid = function (length) {
+    length = length || 5;
+    var text = "";
+    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+    for (var i = 0; i < length; i++)
+        text += possible.charAt(~~(Math.random() * possible.length));
+
+    return text;
+};
+
+module.exports.clone2DArray = function (array) {
+    var res = [];
+    for(var i = 0; i < array.length; i++) {
+        res.push(array[i].slice(0));
+    }
+
+    return res;
+};
 },{}]},{},[1])

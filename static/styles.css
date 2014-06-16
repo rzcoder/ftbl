@@ -50,6 +50,7 @@ body, html {
 
 .startview .buttons button {
     width: 290px;
+    margin-bottom: 20px;
 }
 
 .startview .info {
@@ -72,6 +73,7 @@ body, html {
 .gameview {
     height: 520px;
     width: 820px;
+    box-shadow: 4px 4px 5px 0 rgba(0,0,0,0.3);
 }
 
 .gameview .moves-log {
@@ -105,6 +107,11 @@ body, html {
     font-size: 1.1em;
 }
 
+.gameview .control-buttons {
+    text-align: center;
+    margin-top: 16px;
+}
+
 .scores {
     text-align: center;
     font-size: 3em;
@@ -130,12 +137,11 @@ body, html {
     float: right;
     width: 300px;
     height: 100%;
-    -webkit-transform: perspective(900px) rotateY(-15deg) scale(1.047) translateX(-6px);
+    /*-webkit-transform: perspective(900px) rotateY(-15deg) scale(1.047) translateX(-6px);
     -moz-transform: perspective(900px) rotateY(-15deg) scale(1.047) translateX(-6px);
     -ms-transform: perspective(900px) rotateY(-15deg) scale(1.047) translateX(-6px);
-    transform: perspective(900px) rotateY(-15deg) scale(1.047) translateX(-6px);
+    transform: perspective(900px) rotateY(-15deg) scale(1.047) translateX(-6px);*/
     background-color: #ededed;
-    box-shadow: 5px 2px 5px -1px rgba(0, 0, 0, 0.3);
 }
 
 .shareButtons {
@@ -156,7 +162,6 @@ body, html {
     width: 520px;
     height: 520px;
     margin: 0;
-    box-shadow: 5px 2px 5px 0 rgba(0,0,0,0.3);
 }
 
 button {
@@ -169,7 +174,6 @@ button {
     padding: 15px 25px;
     outline: 0;
     cursor: default;
-    margin-bottom: 20px;
 }
 
 button:hover, button:active, button:focus {

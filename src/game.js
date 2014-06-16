@@ -1,5 +1,6 @@
 var Map = require('./map');
 var EventEmitter = require('./eventEmitter');
+var utils = require('./utils');
 
 module.exports = (function() {
 
@@ -23,7 +24,7 @@ module.exports = (function() {
             scores: [0,0],
             currentPlayer: 0,
             moveLog: [],
-            field: this.map.field.slice(0),
+            field: utils.clone2DArray(this.map.field),
             currentPosition: {
                 x: ~~(this.map.fieldSize / 2),
                 y: ~~(this.map.fieldSize / 2)
@@ -83,7 +84,8 @@ module.exports = (function() {
         if ((x == mx && y == my) || // not same point
             mx < 0 || my < 0 || mx >= this.map.fieldSize || mx >= this.map.fieldSize || // not map overflow
             this.map.field[my][mx] == 0 || // not field overflow
-            (this.map.field[y][x] == 1 && this.map.field[my][mx] == 1 && (y == my || x == mx))) // not from border to border
+            (this.map.field[y][x] == 1 && this.map.field[my][mx] == 1 && (y == my || x == mx)) || // not from border to border
+            this.map.field[my][x] == 0) // not protruding corner
         {
             return false;
         }
@@ -134,18 +136,21 @@ module.exports = (function() {
         this.state.scores[team]++;
         this.state.currentPlayer = team ^ 1;
 
-        if(deadend) {
+        this.toStartPosition();
+
+        if (deadend) {
             this.fireEvent('deadend', [team ^ 1]);
         } else {
             this.fireEvent('goal', [team]);
         }
 
-        this.toStartPosition();
-
         if (this.getPossibleMoves().length == 0) {
-            console.log('game over');
-            this.fireEvent('gameover');
+            this.gameover('nomoves');
         }
+    };
+
+    Game.prototype.gameover = function(reason) {
+        this.fireEvent('gameover', [reason]);
     };
 
     return Game;

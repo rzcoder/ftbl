@@ -1,6 +1,5 @@
 var config = require('./src/config');
-var GameManager = require('./src/gameManager');
-
+var GamesManager = require('./src/gamesManager');
 
 var express = require('express');
 var app = express();
@@ -9,7 +8,7 @@ var io = require('socket.io')(server);
 
 app.use(express.static(__dirname + '/static'));
 
-var games = new GameManager();
+var games = new GamesManager();
 
 io.on('connection', function (socket) {
     socket.data = socket.data || {};
@@ -73,7 +72,25 @@ io.on('connection', function (socket) {
         socket.data.game = game;
     });
 
+    socket.on('disconnect', function () {
+        if (socket.data.game) {
+            var res = socket.data.game.playerGone(socket);
+
+            if (res.socket) {
+                res.socket.emit('enemyGone');
+                res.socket.data = {}
+            }
+        }
+
+        socket.data = {};
+    });
+
     socket.on('move', function (data) {
+        if (! socket.data.game) {
+            socket.emit('err', {message: 'You not in game'});
+            return;
+        }
+
         var serverGame = socket.data.game;
 
         if (serverGame.game.state.currentPlayer == socket.data.team && serverGame.game.state.currentPlayer == data.team) {

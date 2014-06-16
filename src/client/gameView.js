@@ -121,8 +121,8 @@ module.exports = (function () {
     };
 
     View.prototype.updateScores = function () {
-        this.teamsScores[0].innerText = '0' + this.game.state.scores[0];
-        this.teamsScores[1].innerText = '0' + this.game.state.scores[1];
+        this.teamsScores[0].innerHTML = '0' + this.game.state.scores[0];
+        this.teamsScores[1].innerHTML = '0' + this.game.state.scores[1];
     };
 
     View.prototype.log = function (type) {

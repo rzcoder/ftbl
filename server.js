@@ -1,5 +1,5 @@
+var config = require('./src/config');
 var GameManager = require('./src/gameManager');
-
 
 
 var express = require('express');
@@ -7,12 +7,7 @@ var app = express();
 var server = require('http').Server(app);
 var io = require('socket.io')(server);
 
-var config = {
-    port: 3000,
-    staticFolder: __dirname + '/static'
-};
-
-app.use(express.static(config.staticFolder));
+app.use(express.static(__dirname + '/static'));
 
 var games = new GameManager();
 

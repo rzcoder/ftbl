@@ -5,7 +5,7 @@ module.exports = (function () {
     var utils;
 
     var RESOURCES = {
-        grass: '/assets/grass.jpg'
+        grass: 'assets/grass.jpg'
     };
 
     function Render(view, game) {

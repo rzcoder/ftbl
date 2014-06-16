@@ -74,7 +74,7 @@ var Network = require('./network');
         client.init();
     };
 })();
-},{"../game":9,"./gameView":2,"./network":3,"./startView":6}],2:[function(require,module,exports){
+},{"../game":10,"./gameView":2,"./network":3,"./startView":6}],2:[function(require,module,exports){
 var Render = require('./render');
 var EventEmitter = require('../eventEmitter');
 
@@ -198,8 +198,8 @@ module.exports = (function () {
     };
 
     View.prototype.updateScores = function () {
-        this.teamsScores[0].innerText = '0' + this.game.state.scores[0];
-        this.teamsScores[1].innerText = '0' + this.game.state.scores[1];
+        this.teamsScores[0].innerHTML = '0' + this.game.state.scores[0];
+        this.teamsScores[1].innerHTML = '0' + this.game.state.scores[1];
     };
 
     View.prototype.log = function (type) {
@@ -234,7 +234,7 @@ module.exports = (function () {
 
             case 'deadend':
                 addRecord('deadend', team(arguments[1]) + ' in the dead end! ' + scores());
-                addRecord('move', team(arguments[1] ^ 1) + ' moves again.');
+                addRecord('move', team(arguments[1]) + ' moves again.');
                 break;
                 break;
 
@@ -276,7 +276,9 @@ module.exports = (function () {
 
     return View;
 })();
-},{"../eventEmitter":8,"./render":4}],3:[function(require,module,exports){
+},{"../eventEmitter":9,"./render":4}],3:[function(require,module,exports){
+var config = require('../config');
+
 module.exports = (function() {
 
     function Network(client) {
@@ -284,7 +286,7 @@ module.exports = (function() {
     }
 
     Network.prototype.connect = function() {
-        this.socket = io.connect('/');
+        this.socket = io(':3000');
     };
 
     Network.prototype.setListener = function(event, cb) {
@@ -307,7 +309,7 @@ module.exports = (function() {
     return Network;
 })();
 
-},{}],4:[function(require,module,exports){
+},{"../config":8}],4:[function(require,module,exports){
 var styles = require('./styles');
 var EventEmitter = require('../eventEmitter');
 
@@ -315,7 +317,7 @@ module.exports = (function () {
     var utils;
 
     var RESOURCES = {
-        grass: '/assets/grass.jpg'
+        grass: 'assets/grass.jpg'
     };
 
     function Render(view, game) {
@@ -523,7 +525,7 @@ module.exports = (function () {
 
     return Render;
 })();
-},{"../eventEmitter":8,"./renderUtils":5,"./styles":7}],5:[function(require,module,exports){
+},{"../eventEmitter":9,"./renderUtils":5,"./styles":7}],5:[function(require,module,exports){
 module.exports = function(canvasParams, styles, map) {
     exports = {};
 
@@ -639,12 +641,12 @@ module.exports = (function () {
             var location = window.location;
             var url = location.protocol + '//' + location.host + location.pathname + '#' + data.game.id;
 
-            this.infoText.innerText = 'Give the following link to your friend:';
-            this.infoLink.innerText = url;
+            this.infoText.innerHTML = 'Give the following link to your friend:';
+            this.infoLink.innerHTML = url;
             this.infoLink.setAttribute('href', url);
         } else {
-            this.infoText.innerText = 'Waiting for opponent...';
-            this.infoLink.innerText = '';
+            this.infoText.innerHTML = 'Waiting for opponent...';
+            this.infoLink.innerHTML = '';
             this.infoLink.setAttribute('src', '');
         }
 
@@ -703,6 +705,10 @@ module.exports = {
     ]
 };
 },{}],8:[function(require,module,exports){
+module.exports = {
+    port: 3000
+}
+},{}],9:[function(require,module,exports){
 module.exports = (function () {
     function EventEmitter() {
         this.callbacks = [];
@@ -725,7 +731,7 @@ module.exports = (function () {
     return EventEmitter;
 })();
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 var Map = require('./map');
 var EventEmitter = require('./eventEmitter');
 
@@ -878,7 +884,7 @@ module.exports = (function() {
 
     return Game;
 })();
-},{"./eventEmitter":8,"./map":10}],10:[function(require,module,exports){
+},{"./eventEmitter":9,"./map":11}],11:[function(require,module,exports){
 module.exports = (function() {
     var MAP_DEFAULT_SIZE = 11;
     var GATE_DEFAULT_SIZE = 4;

@@ -1,3 +1,5 @@
+var config = require('../config');
+
 module.exports = (function() {
 
     function Network(client) {
@@ -5,7 +7,7 @@ module.exports = (function() {
     }
 
     Network.prototype.connect = function() {
-        this.socket = io.connect('/');
+        this.socket = io(':3000');
     };
 
     Network.prototype.setListener = function(event, cb) {

@@ -60,12 +60,12 @@ module.exports = (function () {
             var location = window.location;
             var url = location.protocol + '//' + location.host + location.pathname + '#' + data.game.id;
 
-            this.infoText.innerText = 'Give the following link to your friend:';
-            this.infoLink.innerText = url;
+            this.infoText.innerHTML = 'Give the following link to your friend:';
+            this.infoLink.innerHTML = url;
             this.infoLink.setAttribute('href', url);
         } else {
-            this.infoText.innerText = 'Waiting for opponent...';
-            this.infoLink.innerText = '';
+            this.infoText.innerHTML = 'Waiting for opponent...';
+            this.infoLink.innerHTML = '';
             this.infoLink.setAttribute('src', '');
         }
 

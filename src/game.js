@@ -5,7 +5,10 @@ var utils = require('./utils');
 module.exports = (function () {
 
     function Game() {
-
+        this.state = {
+            scores: [0, 0],
+            finished: false
+        };
     }
 
     Game.prototype = new EventEmitter();

@@ -3,6 +3,7 @@ var Game = require('../game');
 var GameView = require('./views/gameView');
 var menuView = require('./views/menuView');
 var Network = require('./network');
+var EventEmitter = require('../eventEmitter');
 
 (function () {
     function Client() {
@@ -12,8 +13,12 @@ var Network = require('./network');
             team: 0
         };
 
+        this.socketReady = false;
+
         this.network.setListener('welcome', function (data) {
             console.log('welcome', data);
+            this.socketReady = true;
+            this.fireEvent('ready');
         });
 
         this.network.setListener('err', function (data) {
@@ -31,6 +36,7 @@ var Network = require('./network');
 
         this.network.setListener('gameStatus', function (data) {
             this.player.team = data.team;
+            this.fireEvent('gameStatus');
         });
 
         this.network.setListener('enemyGone', function (data) {
@@ -42,6 +48,8 @@ var Network = require('./network');
         });
 
     }
+
+    Client.prototype = new EventEmitter();
 
     Client.prototype.init = function () {
         this.menuView = this.menuView || new menuView(this);
@@ -85,7 +93,7 @@ var Network = require('./network');
         client.init();
     };
 })();
-},{"../game":11,"./network":2,"./views/gameView":3,"./views/menuView":4}],2:[function(require,module,exports){
+},{"../eventEmitter":10,"../game":11,"./network":2,"./views/gameView":3,"./views/menuView":4}],2:[function(require,module,exports){
 var config = require('../config');
 
 module.exports = (function () {
@@ -153,6 +161,10 @@ module.exports = (function () {
 
         this.renderer.setListener('ready', function () {
             _this.fireEvent('ready');
+        });
+
+        this.client.setListener('gameStatus', function () {
+            _this.renderer.drawField();
         });
 
         this.init();
@@ -310,11 +322,18 @@ module.exports = (function () {
                 break;
 
             case 'gameover':
+                var winTeam, gameover;
+
                 if (this.game.state.scores[0] == this.game.state.scores[1]) {
-                    var winTeam = '<span></span>'
+                    winTeam = '<span></span>'
                 } else {
-                    var winTeam = (this.game.state.scores[0] > this.game.state.scores[1] ? team(0) : team(1)) + ' win!';
+                    winTeam = (this.game.state.scores[0] > this.game.state.scores[1] ? team(0) : team(1)) + ' win!';
                 }
+
+                if (arguments[1] == 'playerdc') {
+                    addRecord('gameover', 'Your opponent disconnected.');
+                }
+
                 addRecord('gameover', 'Game over! ' + scores() + '<br/>');
                 addRecord('gameover', winTeam);
                 break;
@@ -375,9 +394,18 @@ module.exports = (function () {
 
     MenuView.prototype = new View();
 
-    MenuView.prototype.init = function (){
-        this.show(this.buttonsContainer);
-        this.hide(this.infoContainer);
+    MenuView.prototype.init = function () {
+        var _this = this;
+        if (!this.client.socketReady) {
+            this.showConnecting();
+            this.client.setListener('ready', function(){
+                _this.show(_this.buttonsContainer);
+                _this.hide(_this.infoContainer);
+            });
+        } else {
+            this.show(this.buttonsContainer);
+            this.hide(this.infoContainer);
+        }
     };
 
     MenuView.prototype.setEvents = function () {
@@ -416,6 +444,13 @@ module.exports = (function () {
             this.infoLink.innerHTML = '';
             this.infoLink.setAttribute('src', '');
         }
+    };
+
+    MenuView.prototype.showConnecting = function () {
+        this.hide(this.buttonsContainer);
+        this.show(this.infoContainer);
+        this.infoText.innerHTML = 'Connecting...';
+        this.infoLink.innerHTML = '';
     };
 
     MenuView.prototype.showButtons = function () {

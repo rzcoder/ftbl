@@ -2,6 +2,7 @@ var Game = require('../game');
 var GameView = require('./views/gameView');
 var menuView = require('./views/menuView');
 var Network = require('./network');
+var EventEmitter = require('../eventEmitter');
 
 (function () {
     function Client() {
@@ -11,8 +12,12 @@ var Network = require('./network');
             team: 0
         };
 
+        this.socketReady = false;
+
         this.network.setListener('welcome', function (data) {
             console.log('welcome', data);
+            this.socketReady = true;
+            this.fireEvent('ready');
         });
 
         this.network.setListener('err', function (data) {
@@ -30,6 +35,7 @@ var Network = require('./network');
 
         this.network.setListener('gameStatus', function (data) {
             this.player.team = data.team;
+            this.fireEvent('gameStatus');
         });
 
         this.network.setListener('enemyGone', function (data) {
@@ -41,6 +47,8 @@ var Network = require('./network');
         });
 
     }
+
+    Client.prototype = new EventEmitter();
 
     Client.prototype.init = function () {
         this.menuView = this.menuView || new menuView(this);

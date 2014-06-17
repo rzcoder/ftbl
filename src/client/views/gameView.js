@@ -28,6 +28,10 @@ module.exports = (function () {
             _this.fireEvent('ready');
         });
 
+        this.client.setListener('gameStatus', function () {
+            _this.renderer.drawField();
+        });
+
         this.init();
         this.setEvents();
     }
@@ -192,11 +196,10 @@ module.exports = (function () {
                 }
 
                 if (arguments[1] == 'playerdc') {
-                    gameover = 'Your opponent disconnected.';
-                } else {
-                    gameover = 'Game over!';
+                    addRecord('gameover', 'Your opponent disconnected.');
                 }
-                addRecord('gameover', gameover + scores() + '<br/>');
+
+                addRecord('gameover', 'Game over! ' + scores() + '<br/>');
                 addRecord('gameover', winTeam);
                 break;
         }

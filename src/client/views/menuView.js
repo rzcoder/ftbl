@@ -20,9 +20,18 @@ module.exports = (function () {
 
     MenuView.prototype = new View();
 
-    MenuView.prototype.init = function (){
-        this.show(this.buttonsContainer);
-        this.hide(this.infoContainer);
+    MenuView.prototype.init = function () {
+        var _this = this;
+        if (!this.client.socketReady) {
+            this.showConnecting();
+            this.client.setListener('ready', function(){
+                _this.show(_this.buttonsContainer);
+                _this.hide(_this.infoContainer);
+            });
+        } else {
+            this.show(this.buttonsContainer);
+            this.hide(this.infoContainer);
+        }
     };
 
     MenuView.prototype.setEvents = function () {
@@ -61,6 +70,13 @@ module.exports = (function () {
             this.infoLink.innerHTML = '';
             this.infoLink.setAttribute('src', '');
         }
+    };
+
+    MenuView.prototype.showConnecting = function () {
+        this.hide(this.buttonsContainer);
+        this.show(this.infoContainer);
+        this.infoText.innerHTML = 'Connecting...';
+        this.infoLink.innerHTML = '';
     };
 
     MenuView.prototype.showButtons = function () {

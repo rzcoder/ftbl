@@ -1,16 +1,16 @@
-module.exports = (function() {
+module.exports = (function () {
     var MAP_DEFAULT_SIZE = 11;
     var GATE_DEFAULT_SIZE = 4;
 
     function Map() {
         this.gateSize = GATE_DEFAULT_SIZE;
 
-        if(this.fieldSize < 9 || this.fieldSize % 2 == 0) {
+        if (this.fieldSize < 9 || this.fieldSize % 2 == 0) {
             throw new Error('Field size is too small or even.');
         }
     }
 
-    Map.prototype.generate = function(fieldSize) {
+    Map.prototype.generate = function (fieldSize) {
         this.fieldSize = fieldSize || MAP_DEFAULT_SIZE;
 
         var half = ~~(this.fieldSize / 2);
@@ -55,7 +55,7 @@ module.exports = (function() {
         this.makeBorders();
     };
 
-    Map.prototype.makeBorders = function() {
+    Map.prototype.makeBorders = function () {
         var half = ~~(this.fieldSize / 2);
         var gateXStart = ~~((this.fieldSize - this.gateSize) / 2);
         var gateXEnd = this.fieldSize - ~~((this.fieldSize - this.gateSize) / 2) - 1;
@@ -79,7 +79,7 @@ module.exports = (function() {
         ];
     };
 
-    Map.prototype.load = function(mapData) {
+    Map.prototype.load = function (mapData) {
         this.fieldSize = mapData.fieldSize;
         this.field = mapData.field;
 

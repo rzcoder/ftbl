@@ -11,7 +11,7 @@ module.exports.makeid = function (length) {
 
 module.exports.clone2DArray = function (array) {
     var res = [];
-    for(var i = 0; i < array.length; i++) {
+    for (var i = 0; i < array.length; i++) {
         res.push(array[i].slice(0));
     }
 

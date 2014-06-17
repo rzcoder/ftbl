@@ -2,7 +2,7 @@ var Map = require('./map');
 var EventEmitter = require('./eventEmitter');
 var utils = require('./utils');
 
-module.exports = (function() {
+module.exports = (function () {
 
     function Game() {
 
@@ -10,21 +10,22 @@ module.exports = (function() {
 
     Game.prototype = new EventEmitter();
 
-    Game.prototype.init = function(mapData, state, callbacks) {
+    Game.prototype.init = function (mapData, state, callbacks) {
         this.map = new Map();
-        this.callbacks = callbacks  || {};
+        this.callbacks = callbacks || {};
 
-        if(typeof mapData == 'object') {
+        if (typeof mapData == 'object') {
             this.map.load(mapData);
         } else {
             this.map.generate(mapData);
         }
 
         this.state = state || {
-            scores: [0,0],
+            scores: [0, 0],
             currentPlayer: 0,
             moveLog: [],
             field: utils.clone2DArray(this.map.field),
+            finished: false,
             currentPosition: {
                 x: ~~(this.map.fieldSize / 2),
                 y: ~~(this.map.fieldSize / 2)
@@ -33,7 +34,7 @@ module.exports = (function() {
         };
     };
 
-    Game.prototype.toStartPosition = function() {
+    Game.prototype.toStartPosition = function () {
         this.state.currentPosition = {
             x: ~~(this.map.fieldSize / 2),
             y: ~~(this.map.fieldSize / 2)
@@ -46,16 +47,16 @@ module.exports = (function() {
      * @param y
      * @returns {Array}
      */
-    Game.prototype.getPossibleMoves = function(x, y) {
-        if(x === undefined && y === undefined) {
+    Game.prototype.getPossibleMoves = function (x, y) {
+        if (x === undefined && y === undefined) {
             x = this.state.currentPosition.x;
             y = this.state.currentPosition.y;
         }
 
         var res = [];
 
-        for(var xi = -1; xi <= 1; xi++) {
-            for(var yi = -1; yi <= 1; yi++) {
+        for (var xi = -1; xi <= 1; xi++) {
+            for (var yi = -1; yi <= 1; yi++) {
                 if (this.checkMovePossible(x, y, x + xi, y + yi)) {
                     res.push({x: x + xi, y: y + yi});
                 }
@@ -73,7 +74,7 @@ module.exports = (function() {
      * @param my
      * @returns {boolean}
      */
-    Game.prototype.checkMovePossible = function(x, y, mx, my) {
+    Game.prototype.checkMovePossible = function (x, y, mx, my) {
         if (mx === undefined && my === undefined) {
             mx = x;
             my = y;
@@ -91,10 +92,10 @@ module.exports = (function() {
         }
 
         // not one of past moves
-        for(var i in this.state.moveLog) {
+        for (var i in this.state.moveLog) {
             var move = this.state.moveLog[i];
-            if ((mx == move.mx && my == move.my && x == move.x  && y == move.y) ||
-                (mx == move.x  && my == move.y  && x == move.mx && y == move.my)) {
+            if ((mx == move.mx && my == move.my && x == move.x && y == move.y) ||
+                (mx == move.x && my == move.y && x == move.mx && y == move.my)) {
                 return false;
             }
         }
@@ -102,7 +103,7 @@ module.exports = (function() {
         return true;
     };
 
-    Game.prototype.move = function(move) {
+    Game.prototype.move = function (move) {
         if (this.checkMovePossible(move.x, move.y, move.mx, move.my)) {
 
             this.state.moveLog.push(move);
@@ -112,7 +113,6 @@ module.exports = (function() {
             }
 
             this.state.field[move.my][move.mx] = 3;
-
 
             this.state.currentPosition.x = move.mx;
             this.state.currentPosition.y = move.my;
@@ -132,7 +132,7 @@ module.exports = (function() {
         }
     };
 
-    Game.prototype.goal = function(team, deadend) {
+    Game.prototype.goal = function (team, deadend) {
         this.state.scores[team]++;
         this.state.currentPlayer = team ^ 1;
 
@@ -149,8 +149,9 @@ module.exports = (function() {
         }
     };
 
-    Game.prototype.gameover = function(reason) {
+    Game.prototype.gameover = function (reason) {
         this.fireEvent('gameover', [reason]);
+        this.state.finished = true;
     };
 
     return Game;

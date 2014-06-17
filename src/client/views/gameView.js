@@ -1,27 +1,17 @@
-var Render = require('./render');
-var EventEmitter = require('../eventEmitter');
+var Render = require('./render/render');
+var View = require('./view');
 
 module.exports = (function () {
     var CANVAS_SIZE = 520;
     var CANVAS_PADDING = 10;
 
-    View.prototype = new EventEmitter();
-
-    function View(client, canvasSize) {
+    function GameView(client, canvasSize) {
         var _this = this;
+
         this.client = client;
-        this.game = client.game;
+        this.renderer = new Render(this);
 
         this.canvasSize = canvasSize || CANVAS_SIZE;
-        this.canvasParams = {
-            canvasEl: document.querySelector('.gameview #canvas'),
-            width: this.canvasSize,
-            height: this.canvasSize,
-            padding: CANVAS_PADDING,
-            stepSize: ~~((this.canvasSize - CANVAS_PADDING * 2)  / (this.game.map.fieldSize - 1))
-        };
-
-        this.renderer = new Render(this, this.game);
 
         this.container = document.querySelector('.gameview');
         this.teamsScores = [
@@ -29,13 +19,36 @@ module.exports = (function () {
             document.querySelector('.gameview .scores-team-1')
         ];
         this.movesLog = document.querySelector('.gameview .moves-log');
-        this.controls = document.querySelector('.gameview .control-buttons');
-
-        this.setEvents();
+        this.controls = {
+            container: document.querySelector('.gameview .control-buttons'),
+            returnBtn: document.querySelector('.gameview .control-buttons [data-role="toMain"]')
+        };
 
         this.renderer.setListener('ready', function () {
             _this.fireEvent('ready');
         });
+
+        this.init();
+        this.setEvents();
+    }
+
+    GameView.prototype = new View();
+
+    GameView.prototype.init = function () {
+        var _this = this;
+
+        this.network = this.client.network;
+        this.game = this.client.game;
+
+        this.canvasParams = {
+            canvasEl: document.querySelector('.gameview #canvas'),
+            width: this.canvasSize,
+            height: this.canvasSize,
+            padding: CANVAS_PADDING,
+            stepSize: ~~((this.canvasSize - CANVAS_PADDING * 2) / (this.game.map.fieldSize - 1))
+        };
+
+        this.renderer.init(this.game);
 
         this.game.setListener('move', function (move, newTeam) {
             _this.renderer.drawMoves();
@@ -55,44 +68,39 @@ module.exports = (function () {
             _this.log('deadend', team);
         });
 
-        this.game.setListener('gameover', function () {
-            _this.show(_this.controls);
-            _this.log('gameover');
+        this.game.setListener('gameover', function (reason) {
+            _this.show(_this.controls.container);
+            _this.log('gameover', reason);
         });
-    }
 
-    View.prototype = new EventEmitter();
-
-    View.prototype.init = function (){
-        this.hide(this.controls);
+        this.hide(this.controls.container);
         this.movesLog.innerHTML = '';
         this.updateScores();
     };
 
 
-    View.prototype.render = function() {
+    GameView.prototype.render = function () {
         this.renderer.render();
         this.updateScores();
     };
 
-    View.prototype.show = function(el) {
-        var el = el || this.container;
-        el.className = el.className.replace('hidden', '');
-    };
-
-    View.prototype.hide = function(el) {
-        var el = el || this.container;
-        el.className = el.className.replace('hidden', '') + ' hidden';
-    };
-
-    View.prototype.setEvents = function() {
+    GameView.prototype.setEvents = function () {
         var _this = this;
 
-        this.canvasParams.canvasEl.addEventListener('mousemove', function(){ _this.eventMouseMove.apply(_this, arguments);});
-        this.canvasParams.canvasEl.addEventListener('click', function(){ _this.eventClick.apply(_this, arguments);});
+        this.canvasParams.canvasEl.addEventListener('mousemove', function () {
+            _this.eventMouseMove.apply(_this, arguments);
+        });
+        this.canvasParams.canvasEl.addEventListener('click', function () {
+            _this.eventClick.apply(_this, arguments);
+        });
+
+        this.controls.returnBtn.addEventListener('click', function () {
+            _this.network.leaveGame();
+            _this.client.showMenu();
+        });
     };
 
-    View.prototype.calcMovePosition = function(e) {
+    GameView.prototype.calcMovePosition = function (e) {
         var e = e || window.event;
         var state = this.game.state;
 
@@ -129,33 +137,37 @@ module.exports = (function () {
         return res;
     };
 
-    View.prototype.updateScores = function () {
+    GameView.prototype.updateScores = function () {
         this.teamsScores[0].innerHTML = '0' + this.game.state.scores[0];
         this.teamsScores[1].innerHTML = '0' + this.game.state.scores[1];
     };
 
-    View.prototype.log = function (type) {
+    GameView.prototype.log = function (type) {
         var _this = this;
 
-        function addRecord (type, html) {
+        if (this.game.state.finished) {
+            return;
+        }
+
+        function addRecord(type, html) {
             _this.movesLog.innerHTML = '<span class="log-message log-' + type + '">' + html + '</span>' + (_this.movesLog.innerHTML || '');
         }
 
-        function team (team) {
+        function team(team) {
             return '<span class="team-inline-' + team + ' style-team-' + team + '"> Team ' + (team + 1) + '</span>';
         }
 
-        function scores () {
+        function scores() {
             return '<span class="style-team-0 score-inline">0' + _this.game.state.scores[0] + '</span>' +
-            '<span class="score-inline-delimiter">:</span>' +
-            '<span class="style-team-1 score-inline">0' + _this.game.state.scores[1] + '</span>';
+                '<span class="score-inline-delimiter">:</span>' +
+                '<span class="style-team-1 score-inline">0' + _this.game.state.scores[1] + '</span>';
         }
 
         switch (type) {
             case 'move':
                 addRecord('move', team(arguments[1].team) +
-                    ' moves to ' + arguments[1].mx + ':' + arguments[1].my +
-                    (arguments[1].team == arguments[2] ? ' and continue!' : '. Turn passes to ' + team(arguments[2]))
+                        ' moves to ' + arguments[1].mx + ':' + arguments[1].my +
+                        (arguments[1].team == arguments[2] ? ' and continue!' : '. Turn passes to ' + team(arguments[2]))
                 );
                 break;
 
@@ -171,19 +183,27 @@ module.exports = (function () {
                 break;
 
             case 'gameover':
-                if(this.game.state.scores[0] == this.game.state.scores[1]) {
-                    var winTeam = '<span></span>'
+                var winTeam, gameover;
+
+                if (this.game.state.scores[0] == this.game.state.scores[1]) {
+                    winTeam = '<span></span>'
                 } else {
-                    var winTeam = (this.game.state.scores[0] > this.game.state.scores[1] ? team(0) : team(1)) + ' win!';
+                    winTeam = (this.game.state.scores[0] > this.game.state.scores[1] ? team(0) : team(1)) + ' win!';
                 }
-                addRecord('gameover', 'Game over! ' + scores() + '<br/>');
+
+                if (arguments[1] == 'playerdc') {
+                    gameover = 'Your opponent disconnected.';
+                } else {
+                    gameover = 'Game over!';
+                }
+                addRecord('gameover', gameover + scores() + '<br/>');
                 addRecord('gameover', winTeam);
                 break;
         }
 
     };
 
-    View.prototype.eventMouseMove = function (e) {
+    GameView.prototype.eventMouseMove = function (e) {
         var pos = this.calcMovePosition(e);
         if (this.game.state.currentPlayer == this.client.player.team) {
             this.renderer.preview(pos);
@@ -191,7 +211,11 @@ module.exports = (function () {
         this.fireEvent('mousemove', [pos]);
     };
 
-    View.prototype.eventClick = function (e) {
+    GameView.prototype.eventClick = function (e) {
+        if (this.game.state.finished) {
+            return;
+        }
+
         var pos = this.calcMovePosition(e);
 
         if (this.game.state.currentPlayer == this.client.player.team) {
@@ -207,5 +231,5 @@ module.exports = (function () {
         this.fireEvent('click', [pos]);
     };
 
-    return View;
+    return GameView;
 })();

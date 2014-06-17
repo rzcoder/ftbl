@@ -1,110 +1,144 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 var Game = require('../game');
-var GameView = require('./gameView');
-var StartView = require('./startView');
+var GameView = require('./views/gameView');
+var menuView = require('./views/menuView');
 var Network = require('./network');
 
-(function() {
-
-
-    function Client () {
+(function () {
+    function Client() {
         this.network = new Network(this);
         this.network.connect();
         this.player = {
             team: 0
         };
 
-        this.network.setListener('welcome', function(data) {
-            console.log(data);
+        this.network.setListener('welcome', function (data) {
+            console.log('welcome', data);
         });
 
-        this.network.setListener('err', function(data) {
-            console.log(data);
+        this.network.setListener('err', function (data) {
+            console.error('error', data);
         });
 
-        this.network.setListener('gameJoinStatus', function(data) {
+        this.network.setListener('gameJoinStatus', function (data) {
             if (data.status == 'await') {
-                this.startView.showAwait(data);
+                this.menuView.showAwait(data);
             } else if (data.status == 'ready') {
-                console.log(data);
-                this.startView.hide();
                 this.initGame(data.game);
-                this.gameView.show();
+                this.showGame();
             }
         });
 
-        this.network.setListener('gameStatus', function(data) {
+        this.network.setListener('gameStatus', function (data) {
             this.player.team = data.team;
         });
 
-        this.network.setListener('enemyGone', function(data) {
+        this.network.setListener('enemyGone', function (data) {
             this.game.gameover('playerdc');
         });
 
-        this.network.setListener('move', function(data) {
+        this.network.setListener('move', function (data) {
             this.game.move(data);
         });
 
     }
 
-    Client.prototype.init = function() {
-        this.startView = this.startView || new StartView(this);
+    Client.prototype.init = function () {
+        this.menuView = this.menuView || new menuView(this);
 
         if (window.location.hash) {
             this.network.joinPrivateGame(window.location.hash.slice(1));
         } else {
-            this.startView.init();
+            this.menuView.init();
         }
     };
 
-    Client.prototype.initGame = function(gameData) {
+    Client.prototype.initGame = function (gameData) {
         this.game = new Game();
         this.game.init(gameData.fieldSize, gameData.state);
 
-        if (! this.gameView) {
-            this.gameView = new GameView(this, null);
-            this.gameView.setListener('ready', function() {
+        if (!this.gameView) {
+            this.gameView = new GameView(this);
+            this.gameView.setListener('ready', function () {
                 _this.gameView.render();
-                _this.gameView.show();
             });
         } else {
             this.gameView.init();
         }
 
         var _this = this;
-
     };
 
-    window.onload = function() {
+    Client.prototype.showMenu = function () {
+        this.gameView.hide();
+        this.menuView.showButtons();
+        this.menuView.show();
+    };
+
+    Client.prototype.showGame = function () {
+        this.menuView.hide();
+        this.gameView.show();
+    };
+
+    window.onload = function () {
         var client = new Client();
         client.init();
     };
 })();
-},{"../game":10,"./gameView":2,"./network":3,"./startView":6}],2:[function(require,module,exports){
-var Render = require('./render');
-var EventEmitter = require('../eventEmitter');
+},{"../game":11,"./network":2,"./views/gameView":3,"./views/menuView":4}],2:[function(require,module,exports){
+var config = require('../config');
+
+module.exports = (function () {
+
+    function Network(client) {
+        this.client = client;
+    }
+
+    Network.prototype.connect = function () {
+        this.socket = io(':3000');
+    };
+
+    Network.prototype.setListener = function (event, cb) {
+        var client = this.client;
+        this.socket.on(event, function () {
+            cb.apply(client, arguments);
+        })
+    };
+
+    Network.prototype.joinOpenGame = function () {
+        this.socket.emit('joinOpen');
+    };
+
+    Network.prototype.joinPrivateGame = function (id) {
+        this.socket.emit('joinPrivate', {id: id});
+    };
+
+    Network.prototype.leaveGame = function (id) {
+        this.socket.emit('leaveGame', {id: id});
+    };
+
+    Network.prototype.move = function (pos) {
+        this.socket.emit('move', pos);
+    };
+
+    return Network;
+})();
+
+},{"../config":9}],3:[function(require,module,exports){
+var Render = require('./render/render');
+var View = require('./view');
 
 module.exports = (function () {
     var CANVAS_SIZE = 520;
     var CANVAS_PADDING = 10;
 
-    View.prototype = new EventEmitter();
-
-    function View(client, canvasSize) {
+    function GameView(client, canvasSize) {
         var _this = this;
+
         this.client = client;
-        this.game = client.game;
+        this.renderer = new Render(this);
 
         this.canvasSize = canvasSize || CANVAS_SIZE;
-        this.canvasParams = {
-            canvasEl: document.querySelector('.gameview #canvas'),
-            width: this.canvasSize,
-            height: this.canvasSize,
-            padding: CANVAS_PADDING,
-            stepSize: ~~((this.canvasSize - CANVAS_PADDING * 2)  / (this.game.map.fieldSize - 1))
-        };
-
-        this.renderer = new Render(this, this.game);
 
         this.container = document.querySelector('.gameview');
         this.teamsScores = [
@@ -112,13 +146,36 @@ module.exports = (function () {
             document.querySelector('.gameview .scores-team-1')
         ];
         this.movesLog = document.querySelector('.gameview .moves-log');
-        this.controls = document.querySelector('.gameview .control-buttons');
-
-        this.setEvents();
+        this.controls = {
+            container: document.querySelector('.gameview .control-buttons'),
+            returnBtn: document.querySelector('.gameview .control-buttons [data-role="toMain"]')
+        };
 
         this.renderer.setListener('ready', function () {
             _this.fireEvent('ready');
         });
+
+        this.init();
+        this.setEvents();
+    }
+
+    GameView.prototype = new View();
+
+    GameView.prototype.init = function () {
+        var _this = this;
+
+        this.network = this.client.network;
+        this.game = this.client.game;
+
+        this.canvasParams = {
+            canvasEl: document.querySelector('.gameview #canvas'),
+            width: this.canvasSize,
+            height: this.canvasSize,
+            padding: CANVAS_PADDING,
+            stepSize: ~~((this.canvasSize - CANVAS_PADDING * 2) / (this.game.map.fieldSize - 1))
+        };
+
+        this.renderer.init(this.game);
 
         this.game.setListener('move', function (move, newTeam) {
             _this.renderer.drawMoves();
@@ -138,44 +195,39 @@ module.exports = (function () {
             _this.log('deadend', team);
         });
 
-        this.game.setListener('gameover', function () {
-            _this.show(_this.controls);
-            _this.log('gameover');
+        this.game.setListener('gameover', function (reason) {
+            _this.show(_this.controls.container);
+            _this.log('gameover', reason);
         });
-    }
 
-    View.prototype = new EventEmitter();
-
-    View.prototype.init = function (){
-        this.hide(this.controls);
+        this.hide(this.controls.container);
         this.movesLog.innerHTML = '';
         this.updateScores();
     };
 
 
-    View.prototype.render = function() {
+    GameView.prototype.render = function () {
         this.renderer.render();
         this.updateScores();
     };
 
-    View.prototype.show = function(el) {
-        var el = el || this.container;
-        el.className = el.className.replace('hidden', '');
-    };
-
-    View.prototype.hide = function(el) {
-        var el = el || this.container;
-        el.className = el.className.replace('hidden', '') + ' hidden';
-    };
-
-    View.prototype.setEvents = function() {
+    GameView.prototype.setEvents = function () {
         var _this = this;
 
-        this.canvasParams.canvasEl.addEventListener('mousemove', function(){ _this.eventMouseMove.apply(_this, arguments);});
-        this.canvasParams.canvasEl.addEventListener('click', function(){ _this.eventClick.apply(_this, arguments);});
+        this.canvasParams.canvasEl.addEventListener('mousemove', function () {
+            _this.eventMouseMove.apply(_this, arguments);
+        });
+        this.canvasParams.canvasEl.addEventListener('click', function () {
+            _this.eventClick.apply(_this, arguments);
+        });
+
+        this.controls.returnBtn.addEventListener('click', function () {
+            _this.network.leaveGame();
+            _this.client.showMenu();
+        });
     };
 
-    View.prototype.calcMovePosition = function(e) {
+    GameView.prototype.calcMovePosition = function (e) {
         var e = e || window.event;
         var state = this.game.state;
 
@@ -212,33 +264,37 @@ module.exports = (function () {
         return res;
     };
 
-    View.prototype.updateScores = function () {
+    GameView.prototype.updateScores = function () {
         this.teamsScores[0].innerHTML = '0' + this.game.state.scores[0];
         this.teamsScores[1].innerHTML = '0' + this.game.state.scores[1];
     };
 
-    View.prototype.log = function (type) {
+    GameView.prototype.log = function (type) {
         var _this = this;
 
-        function addRecord (type, html) {
+        if (this.game.state.finished) {
+            return;
+        }
+
+        function addRecord(type, html) {
             _this.movesLog.innerHTML = '<span class="log-message log-' + type + '">' + html + '</span>' + (_this.movesLog.innerHTML || '');
         }
 
-        function team (team) {
+        function team(team) {
             return '<span class="team-inline-' + team + ' style-team-' + team + '"> Team ' + (team + 1) + '</span>';
         }
 
-        function scores () {
+        function scores() {
             return '<span class="style-team-0 score-inline">0' + _this.game.state.scores[0] + '</span>' +
-            '<span class="score-inline-delimiter">:</span>' +
-            '<span class="style-team-1 score-inline">0' + _this.game.state.scores[1] + '</span>';
+                '<span class="score-inline-delimiter">:</span>' +
+                '<span class="style-team-1 score-inline">0' + _this.game.state.scores[1] + '</span>';
         }
 
         switch (type) {
             case 'move':
                 addRecord('move', team(arguments[1].team) +
-                    ' moves to ' + arguments[1].mx + ':' + arguments[1].my +
-                    (arguments[1].team == arguments[2] ? ' and continue!' : '. Turn passes to ' + team(arguments[2]))
+                        ' moves to ' + arguments[1].mx + ':' + arguments[1].my +
+                        (arguments[1].team == arguments[2] ? ' and continue!' : '. Turn passes to ' + team(arguments[2]))
                 );
                 break;
 
@@ -254,7 +310,7 @@ module.exports = (function () {
                 break;
 
             case 'gameover':
-                if(this.game.state.scores[0] == this.game.state.scores[1]) {
+                if (this.game.state.scores[0] == this.game.state.scores[1]) {
                     var winTeam = '<span></span>'
                 } else {
                     var winTeam = (this.game.state.scores[0] > this.game.state.scores[1] ? team(0) : team(1)) + ' win!';
@@ -266,7 +322,7 @@ module.exports = (function () {
 
     };
 
-    View.prototype.eventMouseMove = function (e) {
+    GameView.prototype.eventMouseMove = function (e) {
         var pos = this.calcMovePosition(e);
         if (this.game.state.currentPlayer == this.client.player.team) {
             this.renderer.preview(pos);
@@ -274,7 +330,11 @@ module.exports = (function () {
         this.fireEvent('mousemove', [pos]);
     };
 
-    View.prototype.eventClick = function (e) {
+    GameView.prototype.eventClick = function (e) {
+        if (this.game.state.finished) {
+            return;
+        }
+
         var pos = this.calcMovePosition(e);
 
         if (this.game.state.currentPlayer == this.client.player.team) {
@@ -290,44 +350,84 @@ module.exports = (function () {
         this.fireEvent('click', [pos]);
     };
 
-    return View;
+    return GameView;
 })();
-},{"../eventEmitter":9,"./render":4}],3:[function(require,module,exports){
-var config = require('../config');
+},{"./render/render":5,"./view":8}],4:[function(require,module,exports){
+var View = require('./view');
 
-module.exports = (function() {
-
-    function Network(client) {
+module.exports = (function () {
+    function MenuView(client) {
         this.client = client;
+        this.network = client.network;
+
+        this.container = document.querySelector('.menuview');
+        this.buttonsContainer = document.querySelector('.menuview .buttons');
+        this.buttons = {
+            'open': document.querySelector('.menuview button[data-role="open"]'),
+            'new': document.querySelector('.menuview button[data-role="new"]')
+        };
+
+        this.infoContainer = document.querySelector('.menuview .info');
+        this.infoText = document.querySelector('.menuview .info .infoText');
+        this.infoLink = document.querySelector('.menuview .info .infoLink');
+        this.setEvents();
     }
 
-    Network.prototype.connect = function() {
-        this.socket = io(':3000');
+    MenuView.prototype = new View();
+
+    MenuView.prototype.init = function (){
+        this.show(this.buttonsContainer);
+        this.hide(this.infoContainer);
     };
 
-    Network.prototype.setListener = function(event, cb) {
-        var client =  this.client;
-        this.socket.on(event, function(){ cb.apply(client, arguments); })
+    MenuView.prototype.setEvents = function () {
+        var _this = this;
+        this.buttons.open.addEventListener('click', function() { _this.network.joinOpenGame(); });
+        this.buttons.new.addEventListener('click', function() { _this.network.joinPrivateGame(); });
+        this.infoLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (document.body.createTextRange) {
+                var range = document.body.createTextRange();
+                range.moveToElementText(_this.infoLink);
+                range.select();
+            } else if (window.getSelection) {
+                var selection = window.getSelection();
+                var range = document.createRange();
+                range.selectNodeContents(_this.infoLink);
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+        });
     };
 
-    Network.prototype.joinOpenGame = function() {
-        this.socket.emit('joinOpen');
+    MenuView.prototype.showAwait = function (data) {
+        this.hide(this.buttonsContainer);
+        this.show(this.infoContainer);
+
+        if(data.game) {
+            var location = window.location;
+            var url = location.protocol + '//' + location.host + location.pathname + '#' + data.game.id;
+
+            this.infoText.innerHTML = 'Give the following link to your friend:';
+            this.infoLink.innerHTML = url;
+            this.infoLink.setAttribute('href', url);
+        } else {
+            this.infoText.innerHTML = 'Waiting for opponent...';
+            this.infoLink.innerHTML = '';
+            this.infoLink.setAttribute('src', '');
+        }
     };
 
-    Network.prototype.joinPrivateGame = function(id) {
-        this.socket.emit('joinPrivate', {id: id});
+    MenuView.prototype.showButtons = function () {
+        this.hide(this.infoContainer);
+        this.show(this.buttonsContainer);
     };
 
-    Network.prototype.move = function(pos) {
-        this.socket.emit('move', pos);
-    };
-
-    return Network;
+    return MenuView;
 })();
-
-},{"../config":8}],4:[function(require,module,exports){
-var styles = require('./styles');
-var EventEmitter = require('../eventEmitter');
+},{"./view":8}],5:[function(require,module,exports){
+var styles = require('../styles');
+var EventEmitter = require('../../../eventEmitter');
 
 module.exports = (function () {
     var utils;
@@ -336,9 +436,26 @@ module.exports = (function () {
         grass: 'assets/grass.jpg'
     };
 
-    function Render(view, game) {
-        this.game = game;
+    function Render(view) {
+        var _this = this;
+
         this.view = view;
+        this.ready = false;
+
+        this.loadResources(function () {
+            _this.ready = true;
+            _this.fireEvent('ready');
+        });
+
+        this.setListener('ready', function () {
+            _this.drawField();
+        });
+    }
+
+    Render.prototype = new EventEmitter();
+
+    Render.prototype.init = function (game) {
+        this.game = game;
         utils = require('./renderUtils')(this.view.canvasParams, styles, this.game.map);
 
         // main context
@@ -352,14 +469,10 @@ module.exports = (function () {
         this.movesCanvas = this.newCanvas();
         this.movesCtx = this.movesCanvas.getContext('2d');
 
-        var _this = this;
-        this.loadResources(function () {
-            _this.drawField();
-            _this.fireEvent('ready');
-        });
-    }
-
-    Render.prototype = new EventEmitter();
+        if (this.ready) {
+            this.fireEvent('ready');
+        }
+    };
 
     /**
      * Create new dynamic canvas el
@@ -541,8 +654,8 @@ module.exports = (function () {
 
     return Render;
 })();
-},{"../eventEmitter":9,"./renderUtils":5,"./styles":7}],5:[function(require,module,exports){
-module.exports = function(canvasParams, styles, map) {
+},{"../../../eventEmitter":10,"../styles":7,"./renderUtils":6}],6:[function(require,module,exports){
+module.exports = function (canvasParams, styles, map) {
     exports = {};
 
     exports.point = function (ctx, x, y, radius) {
@@ -594,82 +707,6 @@ module.exports = function(canvasParams, styles, map) {
     return exports;
 
 };
-},{}],6:[function(require,module,exports){
-module.exports = (function () {
-
-    function View(client) {
-        this.client = client;
-        this.network = client.network;
-
-        this.container = document.querySelector('.startview');
-        this.buttonsContainer = document.querySelector('.startview .buttons');
-        this.buttons = {
-            'open': document.querySelector('.startview button[data-role="open"]'),
-            'new': document.querySelector('.startview button[data-role="new"]')
-        };
-
-        this.infoContainer = document.querySelector('.startview .info');
-        this.infoText = document.querySelector('.startview .info .infoText');
-        this.infoLink = document.querySelector('.startview .info .infoLink');
-        this.setEvents();
-    }
-
-    View.prototype.init = function (){
-        this.show(this.buttonsContainer);
-        this.hide(this.infoContainer);
-    };
-
-    View.prototype.show = function (el) {
-        var el = el || this.container;
-        el.className = el.className.replace('hidden', '');
-    };
-
-    View.prototype.hide = function (el) {
-        var el = el || this.container;
-        el.className = el.className.replace('hidden', '') + ' hidden';
-    };
-
-    View.prototype.setEvents = function () {
-        var _this = this;
-        this.buttons.open.addEventListener('click', function() { _this.network.joinOpenGame(); });
-        this.buttons.new.addEventListener('click', function() { _this.network.joinPrivateGame(); });
-        this.infoLink.addEventListener('click', function(e) {
-            e.preventDefault();
-            if (document.body.createTextRange) {
-                var range = document.body.createTextRange();
-                range.moveToElementText(_this.infoLink);
-                range.select();
-            } else if (window.getSelection) {
-                var selection = window.getSelection();
-                var range = document.createRange();
-                range.selectNodeContents(_this.infoLink);
-                selection.removeAllRanges();
-                selection.addRange(range);
-            }
-        });
-    };
-
-    View.prototype.showAwait = function (data) {
-        this.hide(this.buttonsContainer);
-        this.show(this.infoContainer);
-
-        if(data.game) {
-            var location = window.location;
-            var url = location.protocol + '//' + location.host + location.pathname + '#' + data.game.id;
-
-            this.infoText.innerHTML = 'Give the following link to your friend:';
-            this.infoLink.innerHTML = url;
-            this.infoLink.setAttribute('href', url);
-        } else {
-            this.infoText.innerHTML = 'Waiting for opponent...';
-            this.infoLink.innerHTML = '';
-            this.infoLink.setAttribute('src', '');
-        }
-
-    };
-
-    return View;
-})();
 },{}],7:[function(require,module,exports){
 module.exports = {
     border: {
@@ -721,10 +758,31 @@ module.exports = {
     ]
 };
 },{}],8:[function(require,module,exports){
+var EventEmitter = require('../../eventEmitter');
+
+module.exports = (function () {
+    function View() {
+    }
+
+    View.prototype = new EventEmitter();
+
+    View.prototype.show = function (el) {
+        var el = el || this.container;
+        el.className = el.className.replace('hidden', '');
+    };
+
+    View.prototype.hide = function (el) {
+        var el = el || this.container;
+        el.className = el.className.replace('hidden', '') + ' hidden';
+    };
+
+    return View;
+})();
+},{"../../eventEmitter":10}],9:[function(require,module,exports){
 module.exports = {
     port: 3000
 }
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 module.exports = (function () {
     function EventEmitter() {
         this.callbacks = [];
@@ -747,12 +805,12 @@ module.exports = (function () {
     return EventEmitter;
 })();
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 var Map = require('./map');
 var EventEmitter = require('./eventEmitter');
 var utils = require('./utils');
 
-module.exports = (function() {
+module.exports = (function () {
 
     function Game() {
 
@@ -760,21 +818,22 @@ module.exports = (function() {
 
     Game.prototype = new EventEmitter();
 
-    Game.prototype.init = function(mapData, state, callbacks) {
+    Game.prototype.init = function (mapData, state, callbacks) {
         this.map = new Map();
-        this.callbacks = callbacks  || {};
+        this.callbacks = callbacks || {};
 
-        if(typeof mapData == 'object') {
+        if (typeof mapData == 'object') {
             this.map.load(mapData);
         } else {
             this.map.generate(mapData);
         }
 
         this.state = state || {
-            scores: [0,0],
+            scores: [0, 0],
             currentPlayer: 0,
             moveLog: [],
             field: utils.clone2DArray(this.map.field),
+            finished: false,
             currentPosition: {
                 x: ~~(this.map.fieldSize / 2),
                 y: ~~(this.map.fieldSize / 2)
@@ -783,7 +842,7 @@ module.exports = (function() {
         };
     };
 
-    Game.prototype.toStartPosition = function() {
+    Game.prototype.toStartPosition = function () {
         this.state.currentPosition = {
             x: ~~(this.map.fieldSize / 2),
             y: ~~(this.map.fieldSize / 2)
@@ -796,16 +855,16 @@ module.exports = (function() {
      * @param y
      * @returns {Array}
      */
-    Game.prototype.getPossibleMoves = function(x, y) {
-        if(x === undefined && y === undefined) {
+    Game.prototype.getPossibleMoves = function (x, y) {
+        if (x === undefined && y === undefined) {
             x = this.state.currentPosition.x;
             y = this.state.currentPosition.y;
         }
 
         var res = [];
 
-        for(var xi = -1; xi <= 1; xi++) {
-            for(var yi = -1; yi <= 1; yi++) {
+        for (var xi = -1; xi <= 1; xi++) {
+            for (var yi = -1; yi <= 1; yi++) {
                 if (this.checkMovePossible(x, y, x + xi, y + yi)) {
                     res.push({x: x + xi, y: y + yi});
                 }
@@ -823,7 +882,7 @@ module.exports = (function() {
      * @param my
      * @returns {boolean}
      */
-    Game.prototype.checkMovePossible = function(x, y, mx, my) {
+    Game.prototype.checkMovePossible = function (x, y, mx, my) {
         if (mx === undefined && my === undefined) {
             mx = x;
             my = y;
@@ -841,10 +900,10 @@ module.exports = (function() {
         }
 
         // not one of past moves
-        for(var i in this.state.moveLog) {
+        for (var i in this.state.moveLog) {
             var move = this.state.moveLog[i];
-            if ((mx == move.mx && my == move.my && x == move.x  && y == move.y) ||
-                (mx == move.x  && my == move.y  && x == move.mx && y == move.my)) {
+            if ((mx == move.mx && my == move.my && x == move.x && y == move.y) ||
+                (mx == move.x && my == move.y && x == move.mx && y == move.my)) {
                 return false;
             }
         }
@@ -852,7 +911,7 @@ module.exports = (function() {
         return true;
     };
 
-    Game.prototype.move = function(move) {
+    Game.prototype.move = function (move) {
         if (this.checkMovePossible(move.x, move.y, move.mx, move.my)) {
 
             this.state.moveLog.push(move);
@@ -862,7 +921,6 @@ module.exports = (function() {
             }
 
             this.state.field[move.my][move.mx] = 3;
-
 
             this.state.currentPosition.x = move.mx;
             this.state.currentPosition.y = move.my;
@@ -882,7 +940,7 @@ module.exports = (function() {
         }
     };
 
-    Game.prototype.goal = function(team, deadend) {
+    Game.prototype.goal = function (team, deadend) {
         this.state.scores[team]++;
         this.state.currentPlayer = team ^ 1;
 
@@ -899,26 +957,27 @@ module.exports = (function() {
         }
     };
 
-    Game.prototype.gameover = function(reason) {
+    Game.prototype.gameover = function (reason) {
         this.fireEvent('gameover', [reason]);
+        this.state.finished = true;
     };
 
     return Game;
 })();
-},{"./eventEmitter":9,"./map":11,"./utils":12}],11:[function(require,module,exports){
-module.exports = (function() {
+},{"./eventEmitter":10,"./map":12,"./utils":13}],12:[function(require,module,exports){
+module.exports = (function () {
     var MAP_DEFAULT_SIZE = 11;
     var GATE_DEFAULT_SIZE = 4;
 
     function Map() {
         this.gateSize = GATE_DEFAULT_SIZE;
 
-        if(this.fieldSize < 9 || this.fieldSize % 2 == 0) {
+        if (this.fieldSize < 9 || this.fieldSize % 2 == 0) {
             throw new Error('Field size is too small or even.');
         }
     }
 
-    Map.prototype.generate = function(fieldSize) {
+    Map.prototype.generate = function (fieldSize) {
         this.fieldSize = fieldSize || MAP_DEFAULT_SIZE;
 
         var half = ~~(this.fieldSize / 2);
@@ -963,7 +1022,7 @@ module.exports = (function() {
         this.makeBorders();
     };
 
-    Map.prototype.makeBorders = function() {
+    Map.prototype.makeBorders = function () {
         var half = ~~(this.fieldSize / 2);
         var gateXStart = ~~((this.fieldSize - this.gateSize) / 2);
         var gateXEnd = this.fieldSize - ~~((this.fieldSize - this.gateSize) / 2) - 1;
@@ -987,7 +1046,7 @@ module.exports = (function() {
         ];
     };
 
-    Map.prototype.load = function(mapData) {
+    Map.prototype.load = function (mapData) {
         this.fieldSize = mapData.fieldSize;
         this.field = mapData.field;
 
@@ -996,7 +1055,7 @@ module.exports = (function() {
 
     return Map;
 })();
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 module.exports.makeid = function (length) {
     length = length || 5;
     var text = "";
@@ -1010,7 +1069,7 @@ module.exports.makeid = function (length) {
 
 module.exports.clone2DArray = function (array) {
     var res = [];
-    for(var i = 0; i < array.length; i++) {
+    for (var i = 0; i < array.length; i++) {
         res.push(array[i].slice(0));
     }
 

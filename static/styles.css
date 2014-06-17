@@ -21,7 +21,7 @@ body, html {
     left: 50%;
 }
 
-.startview {
+.menuview {
     background: #fff;
     height: 520px;
     width: 820px;
@@ -29,7 +29,7 @@ body, html {
     box-shadow: 2px 2px 3px 0px rgba(0, 0, 0, 0.4);
 }
 
-.startview h1 {
+.menuview h1 {
     text-align: center;
     margin-top: 30px;
     color: #B00;
@@ -37,7 +37,7 @@ body, html {
     font-family: 'Audiowide', 'Helvetica Neue', arial;
 }
 
-.startview .buttons {
+.menuview .buttons {
     width: 290px;
     position: absolute;
     -webkit-transform: translate(-50%, -50%);
@@ -48,22 +48,22 @@ body, html {
     left: 50%;
 }
 
-.startview .buttons button {
+.menuview .buttons button {
     width: 290px;
     margin-bottom: 20px;
 }
 
-.startview .info {
+.menuview .info {
     text-align: center;
     font-size: 1.5em;
 }
 
-.startview .info > span,
-.startview .info > a {
+.menuview .info > span,
+.menuview .info > a {
     display: block;
 }
 
-.startview .info .infoLink {
+.menuview .info .infoLink {
     cursor: text;
     color: #14A1E4;
     text-decoration: underline;
@@ -162,6 +162,7 @@ body, html {
     width: 520px;
     height: 520px;
     margin: 0;
+    background: #f3fff3;
 }
 
 button {

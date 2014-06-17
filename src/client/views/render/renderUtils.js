@@ -1,4 +1,4 @@
-module.exports = function(canvasParams, styles, map) {
+module.exports = function (canvasParams, styles, map) {
     exports = {};
 
     exports.point = function (ctx, x, y, radius) {

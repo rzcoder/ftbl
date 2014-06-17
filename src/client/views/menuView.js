@@ -1,38 +1,31 @@
-module.exports = (function () {
+var View = require('./view');
 
-    function View(client) {
+module.exports = (function () {
+    function MenuView(client) {
         this.client = client;
         this.network = client.network;
 
-        this.container = document.querySelector('.startview');
-        this.buttonsContainer = document.querySelector('.startview .buttons');
+        this.container = document.querySelector('.menuview');
+        this.buttonsContainer = document.querySelector('.menuview .buttons');
         this.buttons = {
-            'open': document.querySelector('.startview button[data-role="open"]'),
-            'new': document.querySelector('.startview button[data-role="new"]')
+            'open': document.querySelector('.menuview button[data-role="open"]'),
+            'new': document.querySelector('.menuview button[data-role="new"]')
         };
 
-        this.infoContainer = document.querySelector('.startview .info');
-        this.infoText = document.querySelector('.startview .info .infoText');
-        this.infoLink = document.querySelector('.startview .info .infoLink');
+        this.infoContainer = document.querySelector('.menuview .info');
+        this.infoText = document.querySelector('.menuview .info .infoText');
+        this.infoLink = document.querySelector('.menuview .info .infoLink');
         this.setEvents();
     }
 
-    View.prototype.init = function (){
+    MenuView.prototype = new View();
+
+    MenuView.prototype.init = function (){
         this.show(this.buttonsContainer);
         this.hide(this.infoContainer);
     };
 
-    View.prototype.show = function (el) {
-        var el = el || this.container;
-        el.className = el.className.replace('hidden', '');
-    };
-
-    View.prototype.hide = function (el) {
-        var el = el || this.container;
-        el.className = el.className.replace('hidden', '') + ' hidden';
-    };
-
-    View.prototype.setEvents = function () {
+    MenuView.prototype.setEvents = function () {
         var _this = this;
         this.buttons.open.addEventListener('click', function() { _this.network.joinOpenGame(); });
         this.buttons.new.addEventListener('click', function() { _this.network.joinPrivateGame(); });
@@ -52,7 +45,7 @@ module.exports = (function () {
         });
     };
 
-    View.prototype.showAwait = function (data) {
+    MenuView.prototype.showAwait = function (data) {
         this.hide(this.buttonsContainer);
         this.show(this.infoContainer);
 
@@ -68,8 +61,12 @@ module.exports = (function () {
             this.infoLink.innerHTML = '';
             this.infoLink.setAttribute('src', '');
         }
-
     };
 
-    return View;
+    MenuView.prototype.showButtons = function () {
+        this.hide(this.infoContainer);
+        this.show(this.buttonsContainer);
+    };
+
+    return MenuView;
 })();

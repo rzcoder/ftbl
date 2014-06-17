@@ -1,5 +1,5 @@
-var styles = require('./styles');
-var EventEmitter = require('../eventEmitter');
+var styles = require('../styles');
+var EventEmitter = require('../../../eventEmitter');
 
 module.exports = (function () {
     var utils;
@@ -8,9 +8,26 @@ module.exports = (function () {
         grass: 'assets/grass.jpg'
     };
 
-    function Render(view, game) {
-        this.game = game;
+    function Render(view) {
+        var _this = this;
+
         this.view = view;
+        this.ready = false;
+
+        this.loadResources(function () {
+            _this.ready = true;
+            _this.fireEvent('ready');
+        });
+
+        this.setListener('ready', function () {
+            _this.drawField();
+        });
+    }
+
+    Render.prototype = new EventEmitter();
+
+    Render.prototype.init = function (game) {
+        this.game = game;
         utils = require('./renderUtils')(this.view.canvasParams, styles, this.game.map);
 
         // main context
@@ -24,14 +41,10 @@ module.exports = (function () {
         this.movesCanvas = this.newCanvas();
         this.movesCtx = this.movesCanvas.getContext('2d');
 
-        var _this = this;
-        this.loadResources(function () {
-            _this.drawField();
-            _this.fireEvent('ready');
-        });
-    }
-
-    Render.prototype = new EventEmitter();
+        if (this.ready) {
+            this.fireEvent('ready');
+        }
+    };
 
     /**
      * Create new dynamic canvas el

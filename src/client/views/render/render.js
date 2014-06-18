@@ -159,9 +159,9 @@ module.exports = (function () {
         utils.cornerCaption(this.fieldCtx, 'bottom-left', styles.team[1].color, 'Team 2');
 
         if (this.view.client.player.team === 0) {
-            utils.cornerCaption(this.fieldCtx, 'top-left', styles.team[0].color, 'You team');
+            utils.cornerCaption(this.fieldCtx, 'top-left', styles.team[0].color, 'Your team');
         } else {
-            utils.cornerCaption(this.fieldCtx, 'bottom-right', styles.team[1].color, 'You team');
+            utils.cornerCaption(this.fieldCtx, 'bottom-right', styles.team[1].color, 'Your team');
         }
     };
 

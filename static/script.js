@@ -622,9 +622,9 @@ module.exports = (function () {
         utils.cornerCaption(this.fieldCtx, 'bottom-left', styles.team[1].color, 'Team 2');
 
         if (this.view.client.player.team === 0) {
-            utils.cornerCaption(this.fieldCtx, 'top-left', styles.team[0].color, 'You team');
+            utils.cornerCaption(this.fieldCtx, 'top-left', styles.team[0].color, 'Your team');
         } else {
-            utils.cornerCaption(this.fieldCtx, 'bottom-right', styles.team[1].color, 'You team');
+            utils.cornerCaption(this.fieldCtx, 'bottom-right', styles.team[1].color, 'Your team');
         }
     };
 
@@ -774,7 +774,7 @@ module.exports = {
 
     caption: {
         background: 'rgba(255, 255, 255, 0.6)',
-        font: "25px Audiowide, Arial"
+        font: "23px Audiowide, Arial"
     },
 
     team: [
@@ -848,7 +848,10 @@ var utils = require('./utils');
 module.exports = (function () {
 
     function Game() {
-
+        this.state = {
+            scores: [0, 0],
+            finished: false
+        };
     }
 
     Game.prototype = new EventEmitter();
